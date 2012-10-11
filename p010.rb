@@ -7,7 +7,8 @@ def prime(n)
   true
 end
 def next_prime(p)
-  (primes.last+2..primes.last*2).step(2) do |i|
+  start = prime(p) ? p+2 : (p % 2 == 0 ? p + 1 : p)
+  (start..start*2).step(2) do |i|
     return i if prime(i)
   end  
 end
@@ -15,9 +16,10 @@ def p10(n)
   primes = [2,3]
   while primes.last < n
     #need to fill in primes
-    (primes.last+2..primes.last*2).step(2) do |i|
-      primes << i if prime(i)
-    end
+    primes << next_prime(primes.last)
   end
   primes[0..-2].reduce(:+)
 end
+
+# The sum of the primes below 10 is 2 + 3 + 5 + 7 = 17.
+# Find the sum of all the primes below two million.

@@ -27,9 +27,10 @@ def setup_p(num)
     f.puts "load 'common.rb'"
     f.puts "def p#{num}(n=1)\n  \nend"
   end unless File.exists?("p%03d.rb" % num)
-  append_desc(num)
+  append_p_desc(num)
 end
 def append_p_desc(num)
+  require 'open-uri'
   require 'rubygems'
   require 'nokogiri'
   doc = Nokogiri::HTML(open("http://projecteuler.net/problem=#{num}"))
