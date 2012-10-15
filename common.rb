@@ -57,6 +57,9 @@ def divisors(n)
   end
   divisors.sort
 end
+def proper_divisors(n)
+  divisors(n) - [n]
+end
 def try_p(num,*args)
   load("p%03d.rb" % num) 
   t = Time.now
