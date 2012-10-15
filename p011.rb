@@ -23,7 +23,8 @@ def p11(n=1)
   max = 0
   0.upto(grid.size-1) do |i|
     row = grid[i]
-    0.upto(grid.first.size-1) do |j|
+    0.upto(row.size-1) do |j|
+      next if row[j] == 0
       #horizontals are easy, just take the ranges of this subarray
       max = [max, row[j..j+3].reduce(:*), row[[0,j-3].max..j].reduce(:*)].max
       #verticals are just the same location in various rows
@@ -34,9 +35,9 @@ def p11(n=1)
       #diagonal originating from i,j to the bottom right (i+3, j+3)
       diag = (i..bottom).map{|i2| grid[i2][j+(i2-i)]}.compact.reduce(:*)
       max = [max, diag].max
-      if i == 6 && j == 8
-        puts "at #{i},#{j} val is #{grid[i][j]} diag is #{diag}"
-      end
+      #diagonal originating from i,j to the bottom left (i+3, j-3)
+      diag = (i..bottom).map{|i2| j2 = j-(i2-i); j2 < 0 ? nil : grid[i2][j2]}.compact.reduce(:*)
+      max = [max, diag].max
     end
   end
   max
