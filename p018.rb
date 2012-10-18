@@ -53,7 +53,7 @@ def p18(file="p018.txt")
   end
   max_node = node_rows[-1].max_by{|n| length_to[n]}
   length_to[max_node]
- end
+end
 
 
 #brute force recursion took 0.044573s
@@ -79,8 +79,7 @@ def best_path_rec(graph,path,sum)
   end
 end
 #ideas for improvements:
-# http://en.wikipedia.org/wiki/Longest_path_problem#Weighted_directed_acyclic_graphs this is DAG, infact its a Tree.
-# some kind of bottom up approach, where we eliminate branches of the tree
+# http://en.wikipedia.org/wiki/Longest_path_problem#Weighted_directed_acyclic_graphs this is DAG
 def p18_rec(file="p018.txt")
   graph = File.read(file).split("\n").map{|l| l.split(/\s+/).map(&:to_i)}
   node_rows = []

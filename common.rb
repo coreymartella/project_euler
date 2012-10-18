@@ -2,10 +2,19 @@ def prime_factors(n)
   prime_factorization(n).map(&:first)
 end
 def prime(n)
-  factors= []
-  return false if n % 2 == 0 && n > 2
-  3.step((n/2.0).ceil,2) do |i|
+  return false if n <= 1
+  return true if n == 2
+  known = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+  known.each do |i|
+    return true if n == i
     return false if n % i == 0
+  end
+  delta = 4
+  j = 101
+  top = n ** 0.5
+  while j < top
+    return false if n % j == 0
+    j, delta = j+delta,6-delta
   end
   true
 end
