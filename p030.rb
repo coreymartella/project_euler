@@ -1,9 +1,8 @@
 load 'common.rb'
 def p30(n=5)
-  (1..10**(n+1)-1).map do |i|
-    digits = i.to_s.split("").map{|d| d.to_i ** 5}.reduce(:+)
-    digits == i ? i : 0
-  end.reduce(:+)
+  (2..10**(n+1)-1).reduce(0) do |r,i|
+    r + (i.to_s.chars.reduce(0){|s,d| s + d.to_i**5} == i ? i : 0)
+  end
 end
 
 # Surprisingly there are only three numbers that can be written as the sum of fourth powers of their digits:
