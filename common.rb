@@ -9,14 +9,21 @@ def prime(n)
     return true if n == i
     return false if n % i == 0
   end
-  delta = 4
   j = 101
-  top = n ** 0.5
-  while j < top
+  top = Math.sqrt(n).ceil
+  while j <= top
     return false if n % j == 0
-    j, delta = j+delta,6-delta
+    j+=2
   end
   true
+end
+def next_prime(n)
+  #find the next prime greater than n
+  i = n % 2 == 0 ? n + 1 : n + 2
+  while true
+    return i if prime(i)
+    i += 2
+  end
 end
 def primes(n)
   primes = [2,3,5,7,11,13,17,19]
@@ -30,7 +37,8 @@ end
 def prime_factorization(n)
   factors= []
   max_factor = (n*0.5).ceil
-  if n % 2 == 0
+  known = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
+  known.each do |p|
     i = 2
     factor_count = 0
     while n % i == 0
@@ -39,7 +47,7 @@ def prime_factorization(n)
     end
     factors << [i, factor_count]
   end
-  3.step(max_factor,2) do |i|
+  known.last.step(max_factor,2) do |i|
     if n % i == 0
       factor_count = 0
       while n % i == 0
@@ -55,14 +63,14 @@ def prime_factorization(n)
   factors
 end
 def num_divisors(n)
-  primes, powers = prime_factorization(n).transpose
+  powers = prime_factorization(n).transpose[-1]
   powers.map{|i| i + 1}.reduce(:*)
 end
 def divisors(n)
   primes, powers = prime_factorization(n).transpose
   exponents = powers.map{|i| (0..i).to_a}
-  divisors = exponents.shift.product(*exponents).map do |powers|
-    primes.zip(powers).map{|prime, power| prime ** power}.inject(:*)
+  divisors = exponents.shift.product(*exponents).map do |divisor_powers|
+    primes.zip(divisor_powers).map{|prime, power| prime ** power}.inject(:*)
   end
   divisors.sort
 end
@@ -70,6 +78,7 @@ def proper_divisors(n)
   divisors(n) - [n]
 end
 def try_p(num,*args)
+  load("common.rb" % num) 
   load("p%03d.rb" % num) 
   t = Time.now
   res = send("p#{num}",*args)
