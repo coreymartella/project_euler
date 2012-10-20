@@ -25,6 +25,14 @@ def next_prime(n)
     i += 2
   end
 end
+def prev_prime(n)
+  #find the prev prime less than n
+  i = n % 2 == 0 ? n - 1 : n - 2
+  while true
+    return i if prime(i)
+    i -= 2
+  end
+end
 def primes(n)
   primes = [2,3,5,7,11,13,17,19]
   next_possible = primes[-1] + 2
