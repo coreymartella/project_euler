@@ -8,14 +8,16 @@ class P393
     @ways = 0
     @before = Array.new(s)
     @after = Array.new(s)
+    @sols = []
   end
   def solve
     dfs
+    puts @sols.reduce(Hash.new(0)){|h,e| h[e] += 1; h}.inspect
     @ways
   end
   protected
-    def dfs
-      0.upto(@s-1) do |i|
+    def dfs(start=0)
+      start.upto(@s-1) do |i|
         next if @before[i]
 
         # y = i/n
@@ -23,34 +25,38 @@ class P393
         #try to move it up
         if i >= n && !@after[i-n] && @before[i-n] != :d
           @before[i] = @after[i-n] = :u
-          dfs
+          dfs(i+1)
           @before[i] = @after[i-n] = nil #revert
         end
 
         #try to move it down
         if i + n < s && !@after[i+n] && @before[i+n] != :u
           @before[i] = @after[i+n] = :d
-          dfs
+          dfs(i+1)
           @before[i] = @after[i+n] = nil #revert
         end
 
         #try to move it left
         if i % n != 0 && !@after[i-1] && @before[i-1] != :r
           @before[i] = @after[i-1] = :l
-          dfs
+          dfs(i+1)
           @before[i] = @after[i-1] = nil #revert
         end
         #try to move it right
         if i % n != n - 1 && !@after[i+1] && @before[i+1] != :l
           @before[i] = @after[i+1] = :r
-          dfs
+          dfs(i+1)
           @before[i] = @after[i+1] = nil #revert
         end
         break
       end
 
       #check that everything is moved
-      @ways += 1 if @after.all?
+      if @after.all?
+        moves = [:l,:r,:u,:d].map{|m| @after.count{|m_a| m == m_a}}
+        @sols << moves
+        @ways += 1 
+      end
     end
 end
 def p393(n=4)

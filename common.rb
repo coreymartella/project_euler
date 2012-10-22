@@ -47,13 +47,16 @@ def prime_factorization(n)
   max_factor = (n*0.5).ceil
   known = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97]
   known.each do |p|
-    i = 2
-    factor_count = 0
-    while n % i == 0
-      n/=i 
-      factor_count += 1
+    i = p
+    if n % i == 0
+      factor_count = 0
+      while n % i == 0
+        n/=i 
+        factor_count += 1
+      end
+      factors << [i, factor_count]
     end
-    factors << [i, factor_count]
+    break if n == 1
   end
   known.last.step(max_factor,2) do |i|
     if n % i == 0
