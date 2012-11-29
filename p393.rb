@@ -12,18 +12,19 @@ class P393
   end
   def solve
     dfs
-    puts @sols.reduce(Hash.new(0)){|h,e| h[e] += 1; h}.inspect
+    # puts @sols.reduce(Hash.new(0)){|h,e| h[e] += 1; h}.inspect
     @ways
   end
   protected
     def dfs(start=0)
       start.upto(@s-1) do |i|
         next if @before[i]
-
+        moved = false
         # y = i/n
         # x = i % n
         #try to move it up
         if i >= n && !@after[i-n] && @before[i-n] != :d
+          moved = true
           @before[i] = @after[i-n] = :u
           dfs(i+1)
           @before[i] = @after[i-n] = nil #revert
@@ -31,6 +32,7 @@ class P393
 
         #try to move it down
         if i + n < s && !@after[i+n] && @before[i+n] != :u
+          moved = true
           @before[i] = @after[i+n] = :d
           dfs(i+1)
           @before[i] = @after[i+n] = nil #revert
@@ -38,23 +40,27 @@ class P393
 
         #try to move it left
         if i % n != 0 && !@after[i-1] && @before[i-1] != :r
+          moved = true
           @before[i] = @after[i-1] = :l
           dfs(i+1)
           @before[i] = @after[i-1] = nil #revert
         end
         #try to move it right
         if i % n != n - 1 && !@after[i+1] && @before[i+1] != :l
+          moved = true
           @before[i] = @after[i+1] = :r
           dfs(i+1)
           @before[i] = @after[i+1] = nil #revert
         end
         break
       end
-
+      if !moved
+        return
+      end
       #check that everything is moved
       if @after.all?
-        moves = [:l,:r,:u,:d].map{|m| @after.count{|m_a| m == m_a}}
-        @sols << moves
+        # moves = [:l,:r,:u,:d].map{|m| @after.count{|m_a| m == m_a}}
+        # @sols << moves
         @ways += 1 
       end
     end
