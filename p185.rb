@@ -1,30 +1,31 @@
 load 'common.rb'
 def p185(n=1)
   rules = {
-"5616185650518293" => 2,
-"3847439647293047" => 1,
+"3041631117224635" => 3,
+"1841236454324589" => 3,
 "5855462940810587" => 3,
 "9742855507068353" => 3,
 "4296849643607543" => 3,
-"3174248439465858" => 1,
-"4513559094146117" => 2,
 "7890971548908067" => 3,
-"8157356344118483" => 1,
-"2615250744386899" => 2,
 "8690095851526254" => 3,
-"6375711915077050" => 1,
-"6913859173121360" => 1,
+"1748270476758276" => 3,
+"5616185650518293" => 2,
+"4513559094146117" => 2,
+"2615250744386899" => 2,
 "6442889055042768" => 2,
-"2321386104303845" => 0,
 "2326509471271448" => 2,
 "5251583379644322" => 2,
-"1748270476758276" => 3,
-"4895722652190306" => 1,
-"3041631117224635" => 3,
-"1841236454324589" => 3,
 "2659862637316867" => 2,
+"3847439647293047" => 1,
+"3174248439465858" => 1,
+"8157356344118483" => 1,
+"6375711915077050" => 1,
+"6913859173121360" => 1,
+"4895722652190306" => 1,
+"2321386104303845" => 0,
   }.reduce({}){|h,(k,v)| h.merge(k.split("").map(&:to_i) => v)}
 rules5 = {
+#39542 is solution.
 "90342" => 2,
 "70794" => 0,
 "39458" => 2,
@@ -32,20 +33,26 @@ rules5 = {
 "51545" => 2,
 "12531" => 1,
   }.reduce({}){|h,(k,v)| h.merge(k.split("").map(&:to_i) => v)}
+  # P185.new(rules5).solve
   P185.new(rules).solve
 end
 class P185
   BOLD_ON = "\033[7m"
   BOLD_OFF = "\033[0m"
-  attr_accessor :rules, :digits, :sol
+  attr_accessor :rules, :digits, :sol, :sol_size, :iters, :weighted_rules, :weighted_digits
   def initialize(rules)
     @rules = rules
+    @weighted_rules = @rules.keys.sort_by{|rule| -rules[rule]}
+    @rules_total = rules.values.reduce(:+)
   end
   def solve
-    self.digits = Array.new(rules.keys.first.size){{}}
-    #apply all 0 rules to remove digits
-    max_occurs = 0
-    max_indexes = nil
+    @digits = Array.new(rules.keys.first.size){{}}
+
+    @sol = Array.new(digits.size)
+    @sol_size = 0
+    @iters = 0
+
+    #apply all rules with count > 0 to create whitelist of digits
     rules.each do |rule, c|
       next if c == 0
       #add the digits from s to the solution set
@@ -56,66 +63,125 @@ class P185
     end
     rules.each do |rule, c|
       next unless c == 0
-      #remove the digits from s to the solution set
+      #remove the digits from this rule to the solution set since they can't possibly occur
       rule.each_with_index do |d, i|
         digits[i].delete(d)
       end
     end
-    digits.each_with_index do |h,i|
-      h.each do |d,c|
-        if c > max_occurs
-          max_occurs = c
-          max_indexes = [i,d]
-        end
+    #find a digit to attack, logic is the digits with the fewest possibilities, and tie break by the digit with a number that occurs in the most rules.
+    @weighted_digits = (0..digits.size-1).to_a.sort_by{|i| [digits[i].size, -digits[i].values.max, digits[i].values.reduce(:+)]}
+    debug
+    try_rules
+    # rule_combos = choose((0..digits.size-1).to_a, digits.size + 1)
+    # # try_digit(0)
+    # sol.join
+  end
+  def choose(rule_indexes, remaining_weight)
+    return [[]] if rule_indexes.nil? || rule_indexes.empty? && remaining_weight == 0
+    return [] if rule_indexes.nil? || rule_indexes.empty? && k > 0
+    return [[]] if n.size > 0 && k == 0
+    c2 = n.clone
+    c2.pop
+    new_element = n.clone.pop
+    puts "picked #{new_element} from #{n.inspect}"
+    choose(c2, k) + append_all(choose(c2, k-1), new_element)
+  end
+
+  def append_all(lists, element)
+    lists.map { |l| l << element }
+  end
+  def try_rules(*args)#(rule_indexes,selected_rules,rules_weight)
+    # rule_index = rule_indexes.shift
+    # rule = @weighted_rules[rule_index]
+    # selected_rules = << rules
+    # rule_weight = rules[rules]
+
+    remaining_weight = sol.size + 1
+    selected_rules = []
+    @weighted_rules.each_with_index do |rule,i|
+      c = rules[rule]
+      if remaining_weight - c > 0
+        #add it to the list
+        selected_rules << rule
+        remaining_weight -= c
+      elsif remaining_weight - c == 0
+        #found a package.
+        selected_rules << rule
+        remaining_weight -= c
+        break
       end
     end
-    #now find a rule with 1 and try it.
-    self.sol = Array.new(digits.size)
-    #find a digit to attack
-    digit = (0..digits.size-1).to_a.min_by{|i| [digits[i].size, -digits[i].values.max]}
-    try_digit(digit)
-    sol.join
+
+    return if remaining_weight != 0
+
+    puts "trying\n#{selected_rules.map{|r| "#{r.join}=#{rules[r]}"}.join("\n")}"
+    common_digits = Array.new(rules.keys.first.size){{}}
+
+    selected_rules.each do |rule|
+      c = rules[rule]
+      next if c == 0
+      #add the digits from s to the solution set
+      rule.each_with_index do |d, i|
+        next if !digits[i][d] #don't include this digit if blacklisted
+        common_digits[i][d] ||= 0
+        common_digits[i][d] += 1
+      end
+    end
+    puts "common digits:"
+    debug common_digits
   end
-  def try_digit(digit)
+  def try_digit(digit_index)
+    digit = weighted_digits[digit_index]
     options = digits[digit]
     keys = options.keys.sort_by{|k| [-options[k], k]}
     #values = keys.map{|k| options[k]}
+    self.sol_size += 1 #for this try we have our current sol + 1 as the size.
     keys.each do |k|
+      self.iters += 1
       sol[digit] = k
-      print "%-32s #{sol.map{|d| d || "*"}.join}" % "#{' ' * (sol.compact.size-1)}trying"
-      if res = rule_broken
+      print "\r#{sol.map{|d| "%-04s" % (d || "_")}.join}" if @iters % 1000 == 1 && sol.size > 5
+      puts "#{sol.map{|d| d || "_"}.join}" % "#{' ' * (sol.compact.size-1)}" if sol.size == 5
+      if rule_broken?
         sol[digit] = nil
         next 
       end
-      puts ""
       if sol.compact.size < sol.size
-        #pick the next digit to solve and descend. based off not already having a solution for the digit and that digit having the least possible slots
-        next_digit = (0..digits.size-1).to_a.min_by{|i| [sol[i] ? 1 : 0, digits[i].size, -digits[i].values.max]}
-        try_digit(next_digit)
+        #pick the next digit to solve and descend
+        try_digit(digit_index + 1)
       end
-      return 
+      #if the recursion has returned and we have a solution we're good to go.
+      return if sol.compact.size == sol.size
     end
     #no solution found for this digit combo, revert
+    @sol_size -= 1
     sol[digit] = nil
   end
-  def rule_broken
+  def rule_broken?
     #evaulate the rules in the current solution space and see if anything is broken.
-    rules.each do |rule,c|
+    weighted_rules.each do |rule|
+      c = rules[rule]
       sol_c = 0
       rule.each_with_index do |d,i|
         sol_c += 1 if d == sol[i]
+        return true if sol_c > c
       end
-      if sol_c > c #no way its a solution if we've filled more than the rule accounts for.
-        puts "..broken by #{rule.map_with_index{|d,i| sol[i] == d ? "#{BOLD_ON}#{d}#{BOLD_OFF}" : d}.join}: #{rule.map_with_index{|d,i| sol[i] == d ? 1 : 0}.reduce(:+)} > #{c}"
-        return rule 
-      end
+      #if we have a full solution the rule must be exactly matched
+      return true if sol_size == sol.size && sol_c != c
     end
+    <<-LOGIC
+    for the current solution size since rules so that the number of guaratneed digits for the rules gives us at least on digit that must match in 2 rules
+    for example if we have 1 digit in a 5 digit solution "guessed" we need rules that add to N + (N - sol_size) + 1 , so 5 + (5-1) + 1 = 9,
+
+    find a set of rules whos weight adds up to N+1 and have only 1 digit in common.
+    LOGIC
     false
   end
-  def debug
-    lines = digits.map(&:size).max
+  def debug(display_digits=digits)
+    puts((0..display_digits.size-1).to_a.map{|i| "%-4d" % weighted_digits.index(i)}.join(""))
+    puts((0..display_digits.size-1).to_a.map{|i| "%-4d" % i}.join(""))
+    lines = display_digits.map(&:size).max
     lines.times do |i|
-      line = digits.map do |r|
+      line = display_digits.map do |r|
         keys = r.keys.sort_by{|k| [-r[k], k]}
         values = keys.map{|k| r[k]}
         if keys[i] && values[i] > 1
