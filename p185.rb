@@ -23,50 +23,113 @@ def p185(n=1)
 "3041631117224635" => 3,
 "1841236454324589" => 3,
 "2659862637316867" => 2,
-  }
-#   rules = {
-# "90342" => 2,
-# "70794" => 0,
-# "39458" => 2,
-# "34109" => 1,
-# "51545" => 2,
-# "12531" => 1,
-#   }
-  digits = Array.new(rules.keys.first.size){{}}
-  #apply all 0 rules to remove digits
-  rules.each do |s, c|
-    next if c == 0
-    #add the digits from s to the solution set
-    s.split("").each_with_index do |d, i|
-      digits[i][d] ||= 0
-      digits[i][d] += 1
-    end
-  end
-  rules.each do |s, c|
-    next unless c == 0
-    #remove the digits from s to the solution set
-    s.split("").each_with_index do |d, i|
-      digits[i].delete(d)
-    end
-  end
-  puts "possibilities: #{digits.map(&:size).reduce(:*)}"
-  puts digits.map(&:inspect).join("\n")
-  lines = digits.map(&:size).max
-  lines.times do |i|
-    line = digits.map do |r| 
-      if r.keys[i] && r.values[i] > 1
-        "#{r.keys[i]}(#{r.values[i]})"
-      elsif r.keys[i]
-        "#{r.keys[i]}   "
-      else
-        "    "
-      end
-    end.join(" ")
-    puts line
-  end
-  #puts digits.map(&:keys).transpose.map{|l| l.join("  ")}.join("\n")
+  }.reduce({}){|h,(k,v)| h.merge(k.split("").map(&:to_i) => v)}
+rules5 = {
+"90342" => 2,
+"70794" => 0,
+"39458" => 2,
+"34109" => 1,
+"51545" => 2,
+"12531" => 1,
+  }.reduce({}){|h,(k,v)| h.merge(k.split("").map(&:to_i) => v)}
+  P185.new(rules).solve
 end
-
+class P185
+  BOLD_ON = "\033[7m"
+  BOLD_OFF = "\033[0m"
+  attr_accessor :rules, :digits, :sol
+  def initialize(rules)
+    @rules = rules
+  end
+  def solve
+    self.digits = Array.new(rules.keys.first.size){{}}
+    #apply all 0 rules to remove digits
+    max_occurs = 0
+    max_indexes = nil
+    rules.each do |rule, c|
+      next if c == 0
+      #add the digits from s to the solution set
+      rule.each_with_index do |d, i|
+        digits[i][d] ||= 0
+        digits[i][d] += 1
+      end
+    end
+    rules.each do |rule, c|
+      next unless c == 0
+      #remove the digits from s to the solution set
+      rule.each_with_index do |d, i|
+        digits[i].delete(d)
+      end
+    end
+    digits.each_with_index do |h,i|
+      h.each do |d,c|
+        if c > max_occurs
+          max_occurs = c
+          max_indexes = [i,d]
+        end
+      end
+    end
+    #now find a rule with 1 and try it.
+    self.sol = Array.new(digits.size)
+    #find a digit to attack
+    digit = (0..digits.size-1).to_a.min_by{|i| [digits[i].size, -digits[i].values.max]}
+    try_digit(digit)
+    sol.join
+  end
+  def try_digit(digit)
+    options = digits[digit]
+    keys = options.keys.sort_by{|k| [-options[k], k]}
+    #values = keys.map{|k| options[k]}
+    keys.each do |k|
+      sol[digit] = k
+      print "%-32s #{sol.map{|d| d || "*"}.join}" % "#{' ' * (sol.compact.size-1)}trying"
+      if res = rule_broken
+        sol[digit] = nil
+        next 
+      end
+      puts ""
+      if sol.compact.size < sol.size
+        #pick the next digit to solve and descend. based off not already having a solution for the digit and that digit having the least possible slots
+        next_digit = (0..digits.size-1).to_a.min_by{|i| [sol[i] ? 1 : 0, digits[i].size, -digits[i].values.max]}
+        try_digit(next_digit)
+      end
+      return 
+    end
+    #no solution found for this digit combo, revert
+    sol[digit] = nil
+  end
+  def rule_broken
+    #evaulate the rules in the current solution space and see if anything is broken.
+    rules.each do |rule,c|
+      sol_c = 0
+      rule.each_with_index do |d,i|
+        sol_c += 1 if d == sol[i]
+      end
+      if sol_c > c #no way its a solution if we've filled more than the rule accounts for.
+        puts "..broken by #{rule.map_with_index{|d,i| sol[i] == d ? "#{BOLD_ON}#{d}#{BOLD_OFF}" : d}.join}=#{c}"
+        return rule 
+      end
+    end
+    false
+  end
+  def debug
+    lines = digits.map(&:size).max
+    lines.times do |i|
+      line = digits.map do |r|
+        keys = r.keys.sort_by{|k| [-r[k], k]}
+        values = keys.map{|k| r[k]}
+        if keys[i] && values[i] > 1
+          "#{keys[i]}*#{values[i]}"
+        elsif keys[i]
+          "#{keys[i]}  "
+        else
+          "   "
+        end
+      end.join(" ")
+      puts line
+    end
+  end
+end
 # The game Number Mind is a variant of the well known game Master Mind.
 # Instead of coloured pegs, you have to guess a secret sequence of digits. After each guess you're only told in how many places you've guessed the correct digit. So, if the sequence was 1234 and you guessed 2036, you'd be told that you have one correct digit; however, you would NOT be told that you also have another digit in the wrong place.
 # 

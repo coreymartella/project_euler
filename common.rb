@@ -1,3 +1,12 @@
+class Array
+  def map_with_index(&block)
+    res = []
+    each_with_index do |el,i|
+      res << yield(el,i)
+    end
+    res
+  end
+end
 def prime_factors(n)
   prime_factorization(n).map(&:first)
 end
