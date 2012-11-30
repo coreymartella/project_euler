@@ -106,7 +106,7 @@ class P185
         sol_c += 1 if d == sol[i]
       end
       if sol_c > c #no way its a solution if we've filled more than the rule accounts for.
-        puts "..broken by #{rule.map_with_index{|d,i| sol[i] == d ? "#{BOLD_ON}#{d}#{BOLD_OFF}" : d}.join}=#{c}"
+        puts "..broken by #{rule.map_with_index{|d,i| sol[i] == d ? "#{BOLD_ON}#{d}#{BOLD_OFF}" : d}.join}: #{rule.map_with_index{|d,i| sol[i] == d ? 1 : 0}.reduce(:+)} > #{c}"
         return rule 
       end
     end
